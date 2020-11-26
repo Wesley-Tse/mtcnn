@@ -18,11 +18,11 @@ class Trainer:
         self.dataset = dataset
         self.batch_size = batch_size
         self.epoch = epoch
-        self.optimizer = torch.optim.Adam(self.params(), lr=0.001)
+        self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=0.001)
         self.loss_con = nn.BCEWithLogitsLoss()
         self.loss_off = nn.MSELoss()
         if os.path.exists(self.params):
-            net.load_state_dict = torch.load(self.params)
+            self.net.load_state_dict = torch.load(self.params)
 
     def train(self):
         data = DataLoader(dataset=GetSample(self.dataset), batch_size=self.batch_size, shuffle=True, drop_last=True)
@@ -34,18 +34,18 @@ class Trainer:
                 confidence = confidence.to(self.device)
                 offset = offset.to(self.device)
                 key_point = key_point.to(self.device)
-                # 网络输出
-                pre_conf, pre_off, pre_key = self.net(img)
+                pre_conf, pre_off = self.net(img)
+
                 # 置信度loss
                 con_mask = torch.lt(confidence, 2)
                 confidence_ = torch.masked_select(confidence, con_mask)
-                pre_conf_ = torch.masked_select(pre_conf, con_mask)
+                pre_conf_ = torch.masked_select(pre_conf.reshape([pre_conf.shape[0], -1]), con_mask)
                 loss_con = self.loss_con(pre_conf_, confidence_)
                 # 偏移量loss
                 off_mask = torch.gt(confidence, 0)
                 offset_ = torch.masked_select(offset, off_mask)
-                pre_off_ = torch.masked_select(pre_off, off_mask)
-                loss_off = self.loss_off(pre_off, offset_)
+                pre_off_ = torch.masked_select(pre_off.reshape([pre_off.shape[0], -1]), off_mask)
+                loss_off = self.loss_off(pre_off_, offset_)
                 # 计算loss，更新参数
                 loss = loss_con + loss_off
                 self.optimizer.zero_grad()
@@ -61,8 +61,8 @@ class Trainer:
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    dataset = r'D:\PycharmProjects\Datasets\datasets3\48'
-    params = './config/test.pt'
+    dataset = r'D:\Datasets\12'
+    params = r'E:\PyCharmProject\mtcnn\config\test.pt'
     net = PNet()
-    trainer = Trainer(net, params, dataset, device, 512, 10)
+    trainer = Trainer(net, params, dataset, device, 64, 10)
     trainer.train()
