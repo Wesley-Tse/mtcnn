@@ -9,7 +9,7 @@ from matplotlib import pyplot
 from detect.detector import Detector
 if __name__ == '__main__':
 
-    image_path = r'E:\PyCharmProject\mtcnn\src\images\1.jpg'
+    image_path = r'E:\PyCharmProject\mtcnn\src\images\2.jpg'
 
     p_net_param = r'E:\PyCharmProject\mtcnn\config\p.pt'
     r_net_param = r'E:\PyCharmProject\mtcnn\config\r.pt'
@@ -20,8 +20,8 @@ if __name__ == '__main__':
     detector = Detector(p_net_param, r_net_param, o_net_param, device)
 
     with Image.open(image_path) as img:
-        boxes = detector.detect(img)
         print(img.size)
+        boxes = detector.detect(img)
 
         for box in boxes:
             x1 = int(box[0])

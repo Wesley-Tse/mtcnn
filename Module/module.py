@@ -75,7 +75,7 @@ class RNet(nn.Module):
 
     def forward(self, x):
         con_out = self.convolution(x)
-        lin_out = self.layer(con_out.reshape(con_out.shape[0], -1))
+        lin_out = self.layer(con_out.reshape(x.shape[0], -1))
         confidence = self.confidence(lin_out)
         offset = self.off(lin_out)
 
@@ -120,7 +120,7 @@ class ONet(nn.Module):
 
     def forward(self, x):
         con_out = self.convolution(x)
-        lin_out = self.layer(con_out.reshape(con_out.shape[0], -1))
+        lin_out = self.layer(con_out.reshape(x.shape[0], -1))
         confidence = self.confidence(lin_out)
         offset = self.off(lin_out)
 

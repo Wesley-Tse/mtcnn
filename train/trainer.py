@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from datasets.get_data import GetSample
-from Module.module import PNet
+from Module.module import PNet, RNet, ONet
 
 class Trainer:
     def __init__(self, net, params, dataset, device, batch_size, epoch):
@@ -19,14 +19,14 @@ class Trainer:
         self.batch_size = batch_size
         self.epoch = epoch
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=0.001)
-        self.loss_con = nn.BCEWithLogitsLoss()
+        self.loss_con = nn.BCELoss()
         self.loss_off = nn.MSELoss()
-        if os.path.exists(self.params):
-            self.net.load_state_dict = torch.load(self.params)
+        # if os.path.exists(self.params):
+        #     self.net.load_state_dict = torch.load(self.params)
 
     def train(self):
         data = DataLoader(dataset=GetSample(self.dataset), batch_size=self.batch_size, shuffle=True, drop_last=True)
-        epoch = 0
+        epoch = 1
         while epoch < self.epoch:
             print('--------------epoch{}/{}--------------'.format(epoch, self.epoch))
             for i, (img, confidence, offset, key_point) in enumerate(data):
@@ -52,7 +52,7 @@ class Trainer:
                 loss.backward()
                 self.optimizer.step()
 
-                if i % 50 == 0:
+                if i % 20 == 0:
                     print('loss', loss)
                     torch.save(self.net.state_dict() , self.params)
                     print('params save success!')
@@ -61,8 +61,8 @@ class Trainer:
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    dataset = r'D:\Datasets\12'
-    params = r'E:\PyCharmProject\mtcnn\config\test.pt'
-    net = PNet()
-    trainer = Trainer(net, params, dataset, device, 64, 10)
+    dataset = r'D:\Datasets\48'
+    params = r'E:\PyCharmProject\mtcnn\config\o.pt'
+    net = ONet()
+    trainer = Trainer(net, params, dataset, device, 128, 10)
     trainer.train()

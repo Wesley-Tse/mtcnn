@@ -73,7 +73,6 @@ class Detector:
         w, h = image.size
         min_side = min(w, h)
         scale = 1.
-
         while min_side > 12:
             img = self.__trans(image).to(self.device)
             img.unsqueeze_(0)  # N = 1
@@ -81,16 +80,17 @@ class Detector:
                 pre_conf, pre_off = self.p_net(img)
             confidence = pre_conf[0][0].cpu()
             offset = pre_off[0].cpu()
-            index = torch.nonzero(torch.gt(confidence, 0.8))
+            index = torch.nonzero(torch.gt(confidence, 0.7), as_tuple=False)
             box = self.__box(index, offset, confidence[index[:, 0], index[:, 1]], scale)
             scale *= 0.7
             w = int(w * scale)
             h = int(h * scale)
-            img = img.resize((w, h), Image.ANTIALIAS)
+
+            image = image.resize((w, h), Image.ANTIALIAS)
             min_side = min(w, h)
-            box_ = utils.Nms(box, 0.8)
+            box_ = utils.Nms(box, 0.7)
             boxes.extend(box_)
-        return np.stack(utils.Nms(np.array(boxes), 0.7))
+        return np.stack(utils.Nms(np.array(boxes), 0.6))
 
     def __r_net(self, image, p_boxes):
         images = []
@@ -103,14 +103,14 @@ class Detector:
 
             img = image.crop((_x1, _y1, _x2, _y2)).resize((24, 24), Image.ANTIALIAS)
             images.append(self.__trans(img))
-            images = torch.stack(images).to(self.device)
+        images = torch.stack(images).to(self.device)
 
         with torch.no_grad():
             pre_conf, pre_off = self.r_net(images)
         confidence = pre_conf.cpu()
         offset = pre_off.cpu()
         boxes = []
-        indexs, _ = np.where(confidence > 0.9)
+        indexs, _ = np.where(confidence > 0.85)
         for index in indexs:
             box = p_box[index]
             _x1 = int(box[0])
@@ -129,7 +129,7 @@ class Detector:
             boxes.append([x1, y1, x2, y2, confidence[index][0]])
 
         boxes = np.array(torch.tensor(boxes))
-        return utils.Nms(boxes, 0.3)
+        return utils.Nms(boxes, 0.5)
 
     def __o_net(self, image, r_boxes):
         images = []
@@ -143,15 +143,15 @@ class Detector:
 
             img = image.crop((_x1, _y1, _x2, _y2)).resize((48, 48), Image.ANTIALIAS)
             images.append(self.__trans(img))
-            images = torch.stack(images).to(self.device)
+        images = torch.stack(images).to(self.device)
 
         with torch.no_grad():
-            pre_conf, pre_off = self.r_net(images)
+            pre_conf, pre_off = self.o_net(images)
         confidence = pre_conf.cpu()
         offset = pre_off.cpu()
 
         boxes = []
-        indexs, _ = np.where(confidence > 0.95)
+        indexs, _ = np.where(confidence > 0.9)
 
         for index in indexs:
             box = r_box[index]
@@ -170,7 +170,7 @@ class Detector:
 
             boxes.append([x1, y1, x2, y2, confidence[index][0]])
         boxes = np.array(torch.tensor(boxes))
-        return utils.Nms(boxes, 0.4, isMin=True)
+        return utils.Nms(boxes, 0.5, isMin=True)
 
     def __box(self, index, offset, confidence, scale, stride=2, side_len=12):
 
