@@ -22,7 +22,7 @@ if __name__ == '__main__':
     with Image.open(image_path) as img:
         print(img.size)
         boxes = detector.detect(img)
-
+        print(boxes)
         for box in boxes:
             x1 = int(box[0])
             y1 = int(box[1])

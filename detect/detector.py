@@ -88,13 +88,13 @@ class Detector:
 
             image = image.resize((w, h), Image.ANTIALIAS)
             min_side = min(w, h)
-            box_ = utils.Nms(box, 0.7)
+            box_ = utils.nms2(box, 0.7, softnms=True)
             boxes.extend(box_)
-        return np.stack(utils.Nms(np.array(boxes), 0.6))
+        return np.stack(utils.nms2(np.array(boxes), 0.6, softnms=True))
 
     def __r_net(self, image, p_boxes):
         images = []
-        p_box = utils.Expan_box(p_boxes)  # 将p_net输出的框补成方形
+        p_box = utils.expand_box(p_boxes)  # 将p_net输出的框补成方形
         for box in p_box:
             _x1 = int(box[0])
             _y1 = int(box[1])
@@ -129,11 +129,11 @@ class Detector:
             boxes.append([x1, y1, x2, y2, confidence[index][0]])
 
         boxes = np.array(torch.tensor(boxes))
-        return utils.Nms(boxes, 0.5)
+        return utils.nms2(boxes, 0.5, softnms=True)
 
     def __o_net(self, image, r_boxes):
         images = []
-        r_box = utils.Expan_box(r_boxes)
+        r_box = utils.expand_box(r_boxes)
 
         for box in r_box:
             _x1 = int(box[0])
@@ -170,7 +170,7 @@ class Detector:
 
             boxes.append([x1, y1, x2, y2, confidence[index][0]])
         boxes = np.array(torch.tensor(boxes))
-        return utils.Nms(boxes, 0.5, isMin=True)
+        return utils.nms2(boxes, 0.5, is_min=True, softnms=True)
 
     def __box(self, index, offset, confidence, scale, stride=2, side_len=12):
 

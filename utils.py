@@ -6,7 +6,7 @@
 import numpy as np
 
 
-def Iou(box, boxes, isMin=False):
+def iou(box, boxes, isMin=False):
     box_area = (box[2] - box[0]) * (box[3] - box[1])
     boxes_area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
 
@@ -25,14 +25,14 @@ def Iou(box, boxes, isMin=False):
     if isMin:
         # 最小面积
 
-        iou = inter / np.minimum(box_area, boxes_area)
+        out = inter / np.minimum(box_area, boxes_area)
     else:
-        iou = inter / (box_area + boxes_area - inter)
+        out = inter / (box_area + boxes_area - inter)
 
-    return iou
+    return out
 
 
-def Nms(boxes, thresh=0.3, isMin=False):
+def nms(boxes, thresh=0.3, isMin=False):
     if boxes.shape[0] == 0:
         return np.array([])
     boxes_sort = boxes[(-boxes[:, 4]).argsort()]
@@ -44,9 +44,9 @@ def Nms(boxes, thresh=0.3, isMin=False):
         remain_boxes = use_boxes[1:]
         reserve_boxes.append(first_box)
 
-        iou = Iou(first_box, remain_boxes, isMin)
+        out = iou(first_box, remain_boxes, isMin)
 
-        index = np.where(iou < thresh)
+        index = np.where(out < thresh)
         use_boxes = remain_boxes[index]
     if use_boxes.shape[0] == 1:
         reserve_boxes.append(use_boxes[0])
@@ -55,7 +55,7 @@ def Nms(boxes, thresh=0.3, isMin=False):
     return reserve_boxes
 
 
-def Expan_box(box):
+def expand_box(box):
     new_box = box.copy()
     if new_box.shape[0] == 0:
         return np.array([])
@@ -73,3 +73,34 @@ def Expan_box(box):
     new_box[:, 3] = new_box[:, 1] + max_side
 
     return new_box
+
+def nms2(boxes, thresh=0.3, is_min=False, softnms=False):
+    if boxes.shape[0] == 0:
+        return np.array([])
+    _boxes = boxes[(-boxes[:, 4]).argsort()]    # 按置信度排序
+    r_boxes = []
+
+    while _boxes.shape[0] > 1:
+        a_box = _boxes[0]
+        b_boxes = _boxes[1:]
+        score = b_boxes[:, 4]
+        r_boxes.append(a_box)
+
+        if softnms:
+            score_thresh = 0.5
+            # IOU>阈值的框 置信度衰减
+            t_idx = np.where(iou(a_box, b_boxes, is_min) > thresh)
+            score[t_idx] *= (1 - iou(a_box, b_boxes, is_min))[t_idx]
+            # 删除分数<阈值的框
+            _boxes = np.delete(b_boxes, np.where(score < score_thresh), axis=0)
+        else:
+            # 筛选IOU<阈值的框
+            index = np.where(iou(a_box, b_boxes, is_min) < thresh)
+            _boxes = b_boxes[index]
+
+    # 剩余最后1个框 保留
+    if _boxes.shape[0] == 1:
+        r_boxes.append(_boxes[0])
+
+    # 把list组装成矩阵
+    return np.stack(r_boxes)
