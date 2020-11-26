@@ -12,9 +12,9 @@ from torchvision import datasets, utils, transforms
 from torch.utils.data import DataLoader, Dataset
 
 
-class Sample(Dataset):
+class GetSample(Dataset):
     def __init__(self, path):
-        super(Sample, self).__init__()
+        super(GetSample, self).__init__()
         self.path = path
         self.dataset = []
         self.dataset.extend(open(os.path.join(path, 'positive.txt')).readlines())
