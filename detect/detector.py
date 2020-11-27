@@ -82,14 +82,15 @@ class Detector:
             offset = pre_off[0].cpu()
             index = torch.nonzero(torch.gt(confidence, 0.7), as_tuple=False)
             box = self.__box(index, offset, confidence[index[:, 0], index[:, 1]], scale)
+            box_ = utils.nms2(box, 0.7, softnms=True)
+            boxes.extend(box_)
+
             scale *= 0.7
             w = int(w * scale)
             h = int(h * scale)
 
             image = image.resize((w, h), Image.ANTIALIAS)
             min_side = min(w, h)
-            box_ = utils.nms2(box, 0.7, softnms=True)
-            boxes.extend(box_)
         return np.stack(utils.nms2(np.array(boxes), 0.6, softnms=True))
 
     def __r_net(self, image, p_boxes):

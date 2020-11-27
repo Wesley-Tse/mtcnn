@@ -127,7 +127,7 @@ if __name__ == '__main__':
                     face_resize = face_crop.resize((face_size, face_size))
 
                     # 计算生成框和原框的iou
-                    iou = utils.Iou(crop_box, box)[0]
+                    iou = utils.iou(crop_box, box)[0]
 
                     if positive_flag < 1 and iou > 0.65:
                         positive.write(
@@ -190,7 +190,7 @@ if __name__ == '__main__':
                     face_resize = face_crop.resize((face_size, face_size))
 
                     # 计算生成框和原框的iou
-                    iou = utils.Iou(crop_box, box)[0]
+                    iou = utils.iou(crop_box, box)[0]
 
                     if part_flag < 1 and iou < 0.6 and iou > 0.4:
                         part.write(
